@@ -1,0 +1,58 @@
+%% find the fractal boundary for x in [-2,1] for 10^3 points
+
+% initiate points
+N= 1000;
+X = linspace(-2, 1, N);
+Y = nan(size(X)); %empty list for boundary y values
+
+% loop over every x value to find where the boundary is
+for k = 1:N
+    x = X(k);                   % updates x value
+    fn = indicator_fn_at_x(x);  % tests each point
+
+    % if a point is inside (-1) find where it switches to (+1)
+    if fn(0) < 0
+        Y(k) = bisection(fn,0,2);
+    end
+end
+
+% plot the results
+plot(X,Y,'.');
+xlabel('x');
+ylabel('imaginary boundary y');
+title('Top boundary of mandelbrot set');
+grid on;
+
+
+%% fit a polynomial to the boundary
+
+% set polynomial order = 15
+degree = 15;
+
+% filter only the real values
+filterVals = ~isnan(Y) & (X > -2) & (X < 0.25);
+xfilter = X(filterVals); % filtered x values
+yfilter = Y(filterVals); % filtered y values
+p = polyfit(xfilter, yfilter, degree); % fit polynomial
+
+%make a smooth x-range for plotting
+xSmooth = linspace(min(xfilter),max(xfilter),1000);
+% evaluate the fitted polynomial at the x points
+ySmooth = polyval(p, xSmooth); % evaluate the fitted polynomial
+
+% plot the original data and the smooth curve
+figure;
+plot(xfilter, yfilter, '.'); hold on;
+plot(xSmooth, ySmooth, 'r-', 'LineWidth',1.5);
+xlabel('x'); ylabel('y');
+title('15 Degree Polynomial Approximation of the Fractal Boundary');
+grid on;
+
+
+%% compute the curve length of the fitted polynomial
+
+s = min(xfilter);   % lower bound
+e = max(xfilter);   % upper bound
+
+% get the curve length using the poly_len function
+curve = poly_len(p, s, e);   % top half of the boundary
